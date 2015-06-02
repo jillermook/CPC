@@ -1,0 +1,506 @@
+README for CPC (2.1)
+Time-stamp: <2015-06-2 08:07:30 Jialiang Mo>
+
+* Introduction
+
+Peak calling is a work flow of ChIP-Seq, for identifying 
+transcript factor binding sites. But the current tools can only 
+call peaks between two documents, regarding one as treatment and 
+another as control. It's hard to study the protein changing 
+tendency in transcript factor binding sites in a process which 
+usually contain several time points and produce several files. 
+Here we represent a new tool called CPC. It takes the 
+advantage of a popular peaks calling tools MACS and can 
+deal with multiple ChIP-seq files in a process. It can find out 
+protein changing tendency in transcript factor binding sites in 
+a process, classify the transcript factor binding sites with the
+tendency and form html files to demonstrate the result. All of 
+them can be done only with one command which is very convenient.
+
+* Install
+
+This tool in for Unix.
+MACS 1.4.2 or MACS 2 should be installed and can be run in the system. 
+MACS 1.4.2 or MACS 2 should in the path of the system and macs14 or macs2
+command can be be used. MACS 1.4.2 is recommended.
+All the files and folders (except testdata and testoutput folder) in 
+the folder called CPC2.1linuxpack should be put in the same path 
+with the data you want to process and the .out and .sh file in the 
+folder should be executable. If they are not executable, you can input
+
+chmod +x *.sh
+chmod +x *.out 
+
+to make them executable.
+
+* Usage
+
+Usage:./CPC2.1.sh <-t tfile> <-n name> [-a tagname] [-q startstep]
+[-e endstep] [options]
+
+(If you want to use MACS2,you can use:
+./CPC2.1_macs2.sh <-t tfile> <-n name> [-a tagname] [-q startstep]
+[-e endstep] [options]
+)
+
+Example:
+
+ ./CPC2.1.sh -t rep1_0h_part.bam,rep1_24h_part.bam,rep1_40h_part.bam,
+rep1_56h_part.bam,rep1_72h_part.bam,rep1_120h_part.bam -g mm -n output.bed
+ -a 0h,24h,40h,56h,72h,120h -q 1 -e 5
+
+ (run the example with the data in testdata folder, you can get the same 
+result as the file in testout put folder)
+
+Options:
+
+-t tfile      
+              REQUIRED parameter
+			  Name of ChIP-seq files in the process. The number 
+			  of files can be two or more. Names of files should be 
+			  separated with "," and should be allied in the same order 
+              as the process.e.g.
+			  0h.bed,1h.bed,2h.bed
+-n NAME       
+              REQUIRED parameter
+              Name of output data file, which will be used to generate output
+              file names.e.g.
+			  output.bed
+-a 	tagname		
+              This is a required parameter when the parameter in -e is 5.	
+			  The name of tags when finally drawing the picture to show 
+              the tendency of the change of the amount of the protein in 
+               transcript factor binding sites.	The number of tags should
+              be the same as the number of input files and tags should be 
+              separated with ",".e.g.
+               0h,1h,2h			  
+-q  startstep          
+              The program run from the startstep and include this step.The 
+              program has 5 steps in total and the startstep should be 1 to 
+			  5. The introduction of every steps is in the Step field of the
+              READMAE file.			  
+			  Default:1
+-e  endstep         
+              The program run to the endstep and include this step. The 
+              program has 5 steps in total and the endstep should be 1 to 
+			  5. If you only want to run a single step, make 
+			  endstep=startstep. 
+			  The introduction of every steps is in the Step field of the
+              READMAE file.			  
+			  Default：5
+			  
+the options below is used while running MACS1.4.2 and is not required.			  
+-f format     
+              Format of input file, "AUTO", "BED" or
+               "SAM" or "BAM" or "BOWTIE". The default AUTO option
+              will let MACS decide which format the file is. 
+			  DEFAULT: "AUTO"
+-g gsize       
+               Effective genome size. It can be 1.0e+9 or 1000000000,
+               or shortcuts:'hs' for human (2.7e9), 'mm' for mouse
+               (1.87e9), 'ce' for C. elegans (9e7) and 'dm' for
+               fruitfly (1.2e8), Default:hs
+-s tsize       
+              Tag size. This will overide the auto detected tag
+               size.
+-p pvalue
+				Pvalue cutoff for peak detection. DEFAULT: 1e-5
+-b Bandwidth. 
+               Band width. This value is only used while building the
+               shifting model. DEFAULT: 300
+
+* Steps
+
+We run
+
+ ./CPC2.1.sh -t rep1_0h_part.bam,rep1_24h_part.bam,rep1_40h_part.bam,
+rep1_56h_part.bam,rep1_72h_part.bam,rep1_120h_part.bam -g mm -n output.bed
+ -a 0h,24h,40h,56h,72h,120h -q 1 -e 5
+
+for example and we will look into each steps.
+
+#step 1
+
+Run MACS1.4.2 between each of the two files, taking one file as treatment 
+and the other as control and reverse the treatment and control. This step
+is to generate files to show when the amount of protein in the transcript 
+factor binding sites is larger on two time points.
+
+>Usage: 
+
+macs14 <-t tfile> [-c cfile] [-n name] [-g genomesize] [options]
+The introduction of macs1.4.2 can be found on
+http://liulab.dfci.harvard.edu/MACS/.
+
+>Option:
+
+-t -c
+
+Each of the two files will become tfile and cfile.
+
+-n
+
+The name in -n option will be "resultxy.bed". In "resultxy.bed", x is the 
+numerical order of treatment file and y is of control file.The numerical 
+order of the first input file is 1. If the tfile is the second input file 
+and cfile is the third. The name will be "result23.bed".
+
+other[options]
+
+The -g -f -s -p -b option from ./CPC2.1.sh is succeeded to the option 
+in macs14 command as -g -f -s -p --bw and is not the required option.  
+It's only contain part of the options macs14 have. For more detail about
+the option in MACS1.4.2, please refer to the introduction of MACS1.4.2.
+
+>Example for above
+
+If we use the example command above, it will run.
+
+macs14 -t rep1_0h_part.bam -c rep1_24h_part.bam -n result12.bed -g mm
+macs14 -t rep1_0h_part.bam -c rep1_40h_part.bam -n result13.bed -g mm
+..
+macs14 -t rep1_24h_part.bam -c rep1_0h_part.bam -n result21.bed -g mm
+macs14 -t rep1_24h_part.bam -c rep1_40h_part.bam -n result23.bed -g mm
+..
+macs14 -t rep1_120h_part.bam -c rep1_72h_part.bam -n result65.bed -g mm
+
+It will not take the same file as control and treatment.
+It will run (number of input files)*(number of input files -1)times.
+In this example, it will be 6*5=30 times.
+
+>Output files
+
+1.resultxy_peaks.xls 
+2.resultxy_peaks.bed
+3.resultxy_summits.bed
+4.resultxy_negative_peaks.xls
+5.resultxy_model.r
+
+The introduction of these files can be found in the introduction of 
+MACS 1.4.2. The only file used in the next step is "resultxy_peaks.bed".
+
+#step 2
+
+Run "peaks_to_order1.0.out" to transfer the first bed file to order
+file.
+
+>Usage: 
+
+./peaks_to_order1.1.out [input] [output] [filenumber] [order] 
+
+>Option:(the order of options can not change)
+
+input:
+
+Name of input file in this step.
+
+out:
+
+Name of the transferred output file in this step.
+
+filenumber:
+
+The number of input files in the first step. It will be used to create
+a "order matrix" to contain the information of the comparison of the 
+the amount of the protein in the transcript factor binding sites.
+
+order:
+
+The order of input file in the output .bed files in the first step.
+If the name of input file is "resultxy_peaks.bed", the order option 
+will be
+(x-1)*filenumber+(y-1).
+this will be used to create the "order matrix".
+
+>Example for above
+
+If we use the example command above, it will run.
+
+./peaks_to_order1.1.out result12_peaks.bed temp_order1.bed 6 1
+
+It transfer the first .bed file to order file and makes the third step
+-combination more convenient.
+
+>Output files
+1.temp_order1.bed
+
+#step 3
+
+Run "combine_function3.2.out" to combine all the "resultxy_peaks.bed" 
+together to "temp_orderz.bed" file. The "resultxy_peaks.bed" file only 
+contain the comparison outcome between the xth time point and the yth 
+time point in each transcript factor binding site. Thus it should 
+be combined together to show the comparison of the amount of the 
+protein between each two time point in each transcript factor 
+binding site. It combines two files at a time and will loop for many
+times. The final outcome is the last "temp_orderz.bed" file 
+whose z is the largest.
+
+>Usage
+
+./combine_function4.0.out [input1] [input2] [output] [filenumber] 
+[order2]
+
+input1:
+
+The "temp_orderz.bed" file generated from the last loop. It contains
+the information of all the "resultxy_peaks.bed" whose order less than
+z+1. The order of the "resultxy_peaks.bed" is
+(x-1)*filenumber+(y-1).
+
+input2:
+
+The "resultxy_peaks.bed" which is combined into the "temp_orderz.bed" 
+file in this step.
+
+output:
+
+The "temp_order(z+1).bed" file which add the information of input2 file
+to the "temp_orderz.bed" .
+
+filenumber:
+
+The number of input files in the first step. 
+
+
+order2:
+
+The order of input2 file in the output .bed files in the first step.
+If the name of input2 file is "resultxy_peaks.bed", the order option 
+will be
+(x-1)*filenumber+(y-1).
+
+>Example for above
+
+If we use the example command above, it will run.
+
+./combine_function4.0.out temp_order1.bed result13_peaks.bed 
+ temp_order2.bed 6 2
+./combine_function4.0.out temp_order2.bed result14_peaks.bed 
+ temp_order3.bed 6 2
+...
+./combine_function4.0.out temp_order29.bed result65_peaks.bed 
+ temp_order30.bed 6 2
+ 
+The final output is the "temp_order30.bed" which contain all the 
+information in "resultxy_peaks.bed" files.
+
+>Output files
+
+1.temp_orderz.bed
+
+
+#step 4
+
+Run "order_to_ordergraphfile_classify.out" to transfer the 
+information in the last "temp_orderz.bed" file to a output which 
+contains the change tendency in amount of protein in transcript
+factor binding sites. Then classify the transcript factor binding 
+sites with the tendency.
+
+>Usage
+
+./order_to_ordergraphfile_classify.out [input] [name] 
+[filenumber]
+
+input:
+
+The last "temp_orderz.bed" file generated from step 4. This file
+can show the result of the comparison of the amount of protein in
+each transcript binding site between each two time point. 
+
+name:
+
+The -n option from the first step. It will be used as the name of the
+output file. 
+
+filenumber:
+
+The number of input files in the first step.
+
+>Example for above
+
+If we use the example command above, it will run.
+
+./order_to_ordergraphfile_classify.out temp_order30.bed output.bed 
+6
+
+>Output
+1.name 
+  Output file which contains the changing tendency of the amount of
+  the protein in each transcript factor binding site. Its last column
+  shows the tendency. The number shows the relative amount of the 
+  protein. If the number is bigger, the amount of protein is 
+  significantly bigger in this time point.   
+2.class1.bed 
+   classified file.It selects the transcript factor binding sites 
+   whose tendency is monotone decreasing in the name file.   
+3.class2.bed
+   classified file.It selects the transcript factor binding sites 
+   whose tendency is monotone increasing in the name file.    
+4.class3.bed
+   classified file.It selects the transcript factor binding sites 
+   whose tendency is convex in the name file.  
+5.class4.bed
+   classified file.It selects the transcript factor binding sites 
+   whose tendency is concave in the name file.  
+6.class5.bed 
+   classified file.It selects the transcript factor binding sites 
+   whose tendency contains two peaks at least in the name file.  
+
+#step 5
+
+Run "out_to_htmlmlti1.1.out" to transfer the output files in step 4
+to html files which show all the result and draw picture to show the
+changing tendency in amount of protein in transcript factor binding 
+sites in the time process.
+
+>Necessary Ingredient
+
+The "html_ingre" folder contains 9 files which is essential to run 
+this step.
+1.foot.js
+2.Chart.js
+3.drawchartscript.js
+4.pageTurn.html
+5.head.html
+6.rear.html
+7.load_page.html
+8.site.css
+9.style.js
+
+>Usage
+
+./out_to_htmlmlti1.1.out [input] [outputhtml] [filenumber] [graphtag]
+
+input:
+
+The output "name" in step 4. It contains all the data which will be 
+used to generate the html.
+classx.bed will be used to generate the html file too, but it's not 
+necessary for them to be in the option because their name is fixed.
+
+outputhtml:
+
+The first page of the html. User can use this html page to visit all 
+the pages.
+
+filenumber:
+
+The number of input files in the first step.
+
+graphtag: 
+
+The name of tags when drawing the picture to show the tendency of 
+the change of the amount of the protein in transcript factor binding 
+sites.	The number of tags should be the same as the number of input 
+files in the first step and tags should be separated with ",". The	
+option is succeeded from -a in the first step.	 
+
+>Example for above
+
+If we use the example command above, it will run.
+
+./out_to_htmlmlti1.1.out output.bed output.bed.html 6 
+0h,24h,40h,56h,72h,120h
+
+>Output
+1.NAME.html
+
+Name of the main page of the html.User can use this html page to 
+visit all the pages.
+
+2.total_html
+
+A folder contains html related files to demonstrate the data in the
+"name" file in the step 4. The "name" file contains all the transcript 
+factor binding sites in the data in step 4.
+
+3.class1_html
+
+A folder contains html related files to demonstrate the data in the
+"class1.bed" file in the step 4. It shows the transcript factor 
+binding sites whose tendency is monotone decreasing.   
+
+4.class2_html
+
+A folder contains html related files to demonstrate the data in the
+"class1.bed" file in the step 4. It shows the transcript factor 
+binding sites whose tendency is monotone increasing.   
+
+5.class3_html
+
+A folder contains html related files to demonstrate the data in the
+"class1.bed" file in the step 4. It shows the transcript factor 
+binding sites whose tendency is convex.   
+
+6.class4_html
+
+A folder contains html related files to demonstrate the data in the
+"class1.bed" file in the step 4. It shows the transcript factor 
+binding sites whose tendency is concave.   
+
+
+7.class5_html
+
+A folder contains html related files to demonstrate the data in the
+"class1.bed" file in the step 4. It shows the transcript factor 
+binding sites whose tendency contains two peaks at least.   
+
+* Output files
+
+The finally output files (not the intermediate files) are listed below:
+
+1.NAME
+  Output file which contains the changing tendency of the amount of
+  the protein in each transcript factor binding site. Its last column
+  shows the tendency. The number shows the relative amount of the 
+  protein. If the number is bigger, the amount of protein is 
+  significantly bigger in this time point.   
+2.classx.bed(x=1-5)
+   classified file.It selects the transcript factor binding sites 
+   with specific tendency in the NAME file. 
+  class1: monotone decreasing
+  class2: monotone increasing
+  class3: convex
+  class4: concave
+  class5: at least two peaks 
+3.NAME.html
+  Name of the main page of the html. User can use this html page to 
+  visit all the pages and view all the information.
+  NAME.html,total_html,classx_html(x=1-5) should be in the same path.
+  The information can be only seen in the IE browser directly.
+  If your browser is Chrome or Firefox, you should open the browser with
+  "--allow-file-access-from-files" option.
+  You should allow the browser to load the JavaScript.
+4.total_html
+  A folder contains html related files to demonstrate the data in the
+ "NAME" file. 
+5.classx_html(x=1-5)
+  A folder contains html related files to demonstrate the data in the
+ "classx.bed". 
+  The meaning of classx has been shown above. 
+  
+* Test data
+The test data is in the testdata folder
+It include 6 files:
+
+rep1_0h_part.bam
+rep1_24h_part.bam
+rep1_40h_part.bam
+rep1_56h_part.bam
+rep1_72h_part.bam
+rep1_120h_part.bam
+
+They are the ChIP-seq outcomes from mouse at different time points 
+in an experiment and it only covers part of the genome.
+
+If you run 
+
+ ./CPC2.1.sh -t rep1_0h_part.bam,rep1_24h_part.bam,rep1_40h_part.bam,
+rep1_56h_part.bam,rep1_72h_part.bam,rep1_120h_part.bam -g mm -n output.bed
+ -a 0h,24h,40h,56h,72h,120h -q 1 -e 5
+ 
+with the data in the testdata, you can get the same result as the files in
+the testoutput folder. The introduction of the output file can be found in
+the Output section of the READMA file. 
